@@ -1,3 +1,6 @@
+# 📘 AI-Powered Test Case Generation Project
+
+This project aims to simplify the process of generating structured test cases using AI. It leverages Google Gemini AI to analyze user stories from an Excel file and produce well-formatted test cases automatically. The AI-generated test cases serve as an aid to testers, allowing them to accelerate their work and maintain consistency in test case writing. However, human review is essential to ensure accuracy, completeness, and proper validation of the generated test cases. This tool is designed to assist testers, not replace human expertise.
 # 📘 Guide: Running the generate_test_cases.py Script on Windows PowerShell
 
 This guide provides step-by-step instructions for setting up and running the generate_test_cases.py script to generate test cases from an Excel file using **Windows PowerShell**.
