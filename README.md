@@ -101,6 +101,19 @@ python generate_test_cases.py user_stories.xlsx my_test_cases.xlsx
 
 Make sure the file name **ends with .xlsx**, or the script will show an error.  
 
+### Providing an Additional System Information File
+```
+python generate_test_cases.py user_stories.xlsx my_test_cases.xlsx system_info.txt
+```
+- **user_stories.xlsx** → Contains user stories.
+
+- **my_test_cases.xlsx** → (Optional) Custom output file name.
+
+- **system_info.txt** → (Optional) Additional system details for better test cases.
+
+
+If the **system information** file is not provided, the script will assume no extra context is needed.
+
 ---
 
 ## 📌 Troubleshooting
