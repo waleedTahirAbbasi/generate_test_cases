@@ -24,6 +24,12 @@ parser.add_argument(
     default=f"Test_Cases_{datetime.now().strftime('%d%m%Y%H%M%S')}.xlsx",
     help="Path to the output Excel file (must have .xlsx extension, optional, default: Test_Cases_DDMMYYYYHHmmss.xlsx)"
 )
+parser.add_argument(
+    "system_info_file",
+    nargs="?",
+    default=None,
+    help="Optional system information text file to improve test case relevance."
+)
 args = parser.parse_args()
 
 # Validate output file extension
@@ -36,12 +42,23 @@ OUTPUT_FILE = args.output_file
 
 # Define column headers
 HEADERS = [
-    "Name", "Objective", "Precondition", "Test Script (Step-by-Step) - Test steps",
+    "Name", "Objective", "Precondition", "Test Script (Step-by-Step) - Step",
     "Test Script (Step-by-Step) - Test Data", "Test Script (Step-by-Step) - Expected Result", "Coverage (Issues)", "Status"
 ]
 
+# Function to read additional info from the text file
+def read_system_info(system_info_file):
+    """ Reads system context from a text file. """
+    if system_info_file and os.path.exists(system_info_file):
+        try:
+            with open(system_info_file, "r", encoding="utf-8") as file:
+                return file.read().strip()
+        except Exception as e:
+            print(f"❌ Error reading system information file: {e}")
+    return "No additional system context provided."
+
 # Function to generate test cases using Gemini API
-def generate_test_cases(user_story):
+def generate_test_cases(user_story, system_info):
     prompt = f"""Generate detailed test cases for the following user story:
 {user_story}
 Please return the output in **strict JSON format**, with no extra text, using the structure below:
@@ -66,7 +83,10 @@ Output the test cases in the following structured format:
     'Coverage': 'Requirement ID: LOGIN-001',
     'Status': 'Draft'
 }}
-Ensure that the response is **valid JSON**, without any markdown formatting, explanations, or additional text."""
+Ensure that the response is **valid JSON**, without any markdown formatting, explanations, or additional text.
+Use the following additional information as an aid to write the steps in the test cases and not the full test cases. 
+Additional System Context:
+{system_info}"""
 
     try:
         response = genai.GenerativeModel("gemini-2.0-flash-001").generate_content(prompt)
@@ -119,7 +139,7 @@ def parse_test_cases(response_text, user_story_id):
                 "Name": title if first_step else "",
                 "Objective": objective if first_step else "",
                 "Precondition": precondition if first_step else "",
-                "Test Script (Step-by-Step) - Test steps": step.get("Step", "N/A"),
+                "Test Script (Step-by-Step) - Step": step.get("Step", "N/A"),
                 "Test Script (Step-by-Step) - Test Data": step.get("Test Data", "N/A"),
                 "Test Script (Step-by-Step) - Expected Result": step.get("Expected Result", "N/A"),
                 "Coverage (Issues)": coverage if first_step else "",
@@ -147,7 +167,7 @@ def save_to_excel(test_cases):
             worksheet.set_column(col_num, col_num, max(15, len(col_name) + 5))
         
         # Merge cells for columns: Title, Objective, Precondition, Coverage, Status
-        merge_format = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'border': 0})
+        merge_format = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'border': 0, 'text_wrap': True})
         row = 1  # Start from row 1 (since row 0 is headers)
         while row < len(df):
             start_row = row
@@ -205,10 +225,11 @@ def main():
 
     all_test_cases = []
     user_stories = read_user_stories()
+    system_info = read_system_info(args.system_info_file)
 
     for user_story_id, story_text in user_stories:
         print(f"\n🔹 Generating test cases for: {user_story_id}\n")
-        response = generate_test_cases(story_text)
+        response = generate_test_cases(story_text, system_info)
         #print("\nResponse from Gemini:\n", response)
 
         if not response:
